@@ -16,20 +16,54 @@
   <style>
     :root{color-scheme:dark;--bg:#07101d;--card:#0f1b2d;--line:#20304a;--text:#f8fafc;--muted:#94a3b8;--accent:#5eead4}
     *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at top,#13233c 0,#07101d 48%,#030712 100%);color:var(--text);min-height:100vh}
-    main{max-width:1050px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:28px}.brand{font-size:26px;font-weight:900}.brand span{color:var(--accent)}.badge{padding:8px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+    main{max-width:1050px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:28px}.brand{font-size:26px;font-weight:900}.brand span{color:var(--accent)}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.badge,.install{padding:8px 12px;border:1px solid var(--line);border-radius:999px}.badge{color:var(--muted)}.install{display:none;background:var(--accent);color:#04201b;font:inherit;font-weight:800;cursor:pointer}.install[hidden]{display:none!important}
     .hero{padding:28px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(94,234,212,.08),rgba(15,27,45,.86));border-radius:24px;margin-bottom:20px}.hero h1{font-size:clamp(30px,5vw,54px);margin:0 0 12px}.hero p{max-width:700px;color:var(--muted);line-height:1.7}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{padding:20px;border:1px solid var(--line);background:rgba(15,27,45,.82);border-radius:18px}.card b{display:block;margin-bottom:8px}.card span{color:var(--muted);font-size:14px}.status{margin-top:20px;color:var(--muted);font-size:13px}@media(max-width:760px){main{padding:18px}.grid{grid-template-columns:1fr}.hero{padding:22px}}
   </style>
 </head>
 <body>
   <main>
-    <div class="top"><div class="brand">Manager<span>Pro</span></div><div class="badge">PWA base</div></div>
+    <div class="top"><div class="brand">Manager<span>Pro</span></div><div class="actions"><button id="installApp" class="install" type="button" hidden>Instalar app</button><div class="badge">PWA pronto</div></div></div>
     <section class="hero"><h1>Gestão simples, rápida e organizada.</h1><p>Base inicial do ManagerPro preparada para instalação como aplicativo. Os módulos abaixo são a estrutura de navegação do produto; integrações, autenticação e dados reais serão adicionados sem expor informações privadas.</p></section>
     <section class="grid"><article class="card"><b>Operação</b><span>Visão de processos e rotinas.</span></article><article class="card"><b>Equipe</b><span>Acompanhamento de pessoas e responsabilidades.</span></article><article class="card"><b>Resultados</b><span>Indicadores e decisões em um só lugar.</span></article></section>
-    <p class="status">Scaffold funcional de interface. Nenhum dado sensível é armazenado nesta versão.</p>
+    <p id="pwaStatus" class="status">Scaffold funcional de interface. Nenhum dado sensível é armazenado nesta versão.</p>
   </main>
   <script>
-    if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
-      addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    const secureContext = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const installButton = document.getElementById('installApp');
+    const pwaStatus = document.getElementById('pwaStatus');
+    let deferredInstallPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      installButton.hidden = false;
+      installButton.style.display = 'inline-flex';
+    });
+
+    installButton.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installButton.hidden = true;
+      installButton.style.display = 'none';
+      if (choice.outcome === 'accepted') pwaStatus.textContent = 'ManagerPro instalado como aplicativo.';
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      installButton.hidden = true;
+      installButton.style.display = 'none';
+      pwaStatus.textContent = 'ManagerPro instalado como aplicativo.';
+    });
+
+    if ('serviceWorker' in navigator && secureContext) {
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+          registration.update().catch(() => {});
+        } catch (_) {}
+      });
     }
   </script>
 </body>
