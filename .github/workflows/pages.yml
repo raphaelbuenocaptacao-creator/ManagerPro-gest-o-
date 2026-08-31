@@ -23,13 +23,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Validate PWA files
         shell: bash
         run: |
+          set -euo pipefail
           test -f index.html
           test -f manifest.webmanifest
           test -f sw.js
@@ -39,6 +36,11 @@ jobs:
           grep -q 'manifest.webmanifest' index.html
           grep -q 'serviceWorker' index.html
           grep -q '"display"[[:space:]]*:[[:space:]]*"standalone"' manifest.webmanifest
+          grep -q '192x192' manifest.webmanifest
+          grep -q '512x512' manifest.webmanifest
+          grep -q 'maskable' manifest.webmanifest
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
