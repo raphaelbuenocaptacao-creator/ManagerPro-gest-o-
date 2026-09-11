@@ -1,5 +1,5 @@
 const CACHE_PREFIX='managerpro-';
-const CACHE_NAME='managerpro-v5-private-isolated-shell';
+const CACHE_NAME='managerpro-v6-private-vary-range-safe-shell';
 const APP_SHELL=new Set([
   './','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-512-maskable.png'
 ]);
@@ -19,7 +19,7 @@ function isCacheableResponse(response){
   const cc=(response.headers.get('cache-control')||'').toLowerCase();
   const vary=(response.headers.get('vary')||'').toLowerCase();
   if(cc.includes('no-store')||cc.includes('private')) return false;
-  if(vary==='*'||vary.split(',').map(v=>v.trim()).some(v=>v==='cookie'||v==='authorization')) return false;
+  if(vary==='*'||vary.split(',').map(v=>v.trim()).some(v=>v==='cookie'||v==='authorization'||v==='range'||v==='if-range')) return false;
   return true;
 }
 async function precache(){
